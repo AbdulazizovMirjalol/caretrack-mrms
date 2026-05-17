@@ -17,13 +17,13 @@ export const protect = asyncHandler(async (req, res, next) => {
 
   try {
     decoded = jwt.verify(token, env.jwtSecret);
-  } catch (error) {
+  } catch {
     throw new ApiError(401, "Invalid or expired token.");
   }
 
   const { data: user, error } = await supabase
     .from("users")
-    .select("id, full_name, email, role")
+    .select("id, full_name, email, role, doctor_id")
     .eq("id", decoded.id)
     .single();
 

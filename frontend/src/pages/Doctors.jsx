@@ -9,6 +9,7 @@ const initialForm = {
   department: "",
   phone: "",
   email: "",
+  account_password: "Password123!",
 };
 
 const departments = [
@@ -84,6 +85,7 @@ const Doctors = () => {
       department: doctor.department,
       phone: doctor.phone,
       email: doctor.email,
+      account_password: "",
     });
     setError("");
     setFormOpen(true);
@@ -398,6 +400,29 @@ const Doctors = () => {
                     required
                   />
                 </label>
+
+                {!editingDoctor && (
+                  <label className="md:col-span-2">
+                    <span className="mb-2 block text-sm font-bold text-slate-700">
+                      Login password for doctor account
+                    </span>
+
+                    <input
+                      name="account_password"
+                      type="password"
+                      value={formData.account_password}
+                      onChange={handleChange}
+                      className="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm font-medium outline-none focus:border-teal-700 focus:ring-2 focus:ring-teal-100"
+                      placeholder="Password123!"
+                      required
+                    />
+
+                    <p className="mt-2 text-xs font-medium text-slate-500">
+                      This password will be used by the doctor to sign in as a
+                      clinician.
+                    </p>
+                  </label>
+                )}
 
                 <div className="mt-3 flex justify-end gap-3 md:col-span-2">
                   <button

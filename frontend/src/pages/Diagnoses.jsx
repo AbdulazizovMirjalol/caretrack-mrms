@@ -166,12 +166,14 @@ const Diagnoses = () => {
             </p>
 
             <h1 className="mt-2 text-2xl font-bold text-slate-950">
-              Diagnoses
+              {user?.role === "clinician"
+                ? "My Patient Diagnoses"
+                : "Diagnoses"}
             </h1>
-
             <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
-              Manage ICD diagnosis records, severity levels and patient-linked
-              clinical history.
+              {user?.role === "clinician"
+                ? "Review and update diagnosis records for patients assigned to you."
+                : "Manage ICD diagnosis records, severity levels and patient-linked clinical history."}
             </p>
           </div>
 

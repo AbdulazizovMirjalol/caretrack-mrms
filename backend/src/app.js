@@ -8,6 +8,7 @@ import doctorRoutes from "./routes/doctor.routes.js";
 import patientRoutes from "./routes/patient.routes.js";
 import diagnosisRoutes from "./routes/diagnosis.routes.js";
 import dashboardRoutes from "./routes/dashboard.routes.js";
+import userRoutes from "./routes/user.routes.js";
 
 import { env } from "./config/env.js";
 import { notFound, errorHandler } from "./middleware/error.middleware.js";
@@ -61,6 +62,7 @@ app.use("/api/doctors", doctorRoutes);
 app.use("/api/patients", patientRoutes);
 app.use("/api/diagnoses", diagnosisRoutes);
 app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/users", userRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

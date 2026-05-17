@@ -8,6 +8,8 @@ import {
   ShieldCheck,
   Stethoscope,
   Users,
+  UserCircle,
+  UserCog,
   X,
 } from "lucide-react";
 import { useState } from "react";
@@ -37,6 +39,19 @@ const navItems = [
     path: "/diagnoses",
     icon: ClipboardList,
     roles: ["admin", "clinician"],
+  },
+
+  {
+    label: "Profile",
+    path: "/profile",
+    icon: UserCircle,
+    roles: ["admin", "clinician", "receptionist"],
+  },
+  {
+    label: "Staff",
+    path: "/staff",
+    icon: UserCog,
+    roles: ["admin"],
   },
 ];
 

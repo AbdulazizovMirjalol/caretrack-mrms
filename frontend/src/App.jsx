@@ -8,6 +8,8 @@ import Patients from "./pages/Patients";
 import PatientProfile from "./pages/PatientProfile";
 import Diagnoses from "./pages/Diagnoses";
 import NotFound from "./pages/NotFound";
+import Profile from "./pages/Profile";
+import Staff from "./pages/Staff";
 
 const App = () => {
   return (
@@ -25,9 +27,14 @@ const App = () => {
           <Route path="/doctors" element={<Doctors />} />
           <Route path="/patients" element={<Patients />} />
           <Route path="/patients/:id" element={<PatientProfile />} />
+          <Route path="/profile" element={<Profile />} />
 
           <Route element={<ProtectedRoute roles={["admin", "clinician"]} />}>
             <Route path="/diagnoses" element={<Diagnoses />} />
+          </Route>
+          
+          <Route element={<ProtectedRoute roles={["admin"]} />}>
+            <Route path="/staff" element={<Staff />} />
           </Route>
 
           <Route path="*" element={<NotFound />} />

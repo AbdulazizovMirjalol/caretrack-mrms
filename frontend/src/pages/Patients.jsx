@@ -156,11 +156,14 @@ const Patients = () => {
               Patient Management
             </p>
 
-            <h1 className="mt-2 text-2xl font-bold text-slate-950">Patients</h1>
+            <h1 className="mt-2 text-2xl font-bold text-slate-950">
+              {user?.role === "clinician" ? "My Patients" : "Patients"}
+            </h1>
 
             <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
-              Register patients, assign doctors and manage personal clinical
-              information.
+              {user?.role === "clinician"
+                ? "View and update patients assigned to your clinician account."
+                : "Register patients, assign doctors and manage personal clinical information."}
             </p>
           </div>
 

@@ -63,6 +63,37 @@ export const getDiagnoses = asyncHandler(async (req, res) => {
     query = query.eq("patient_id", patientId);
   }
 
+  if (req.user.role === "clinician") {
+    if (!req.user.doctor_id) {
+      return res.status(200).json({
+        success: true,
+        count: 0,
+        diagnoses: [],
+      });
+    }
+
+    const { data: ownPatients, error: patientsError } = await supabase
+      .from("patients")
+      .select("id")
+      .eq("doctor_id", req.user.doctor_id);
+
+    if (patientsError) {
+      throw new ApiError(500, patientsError.message);
+    }
+
+    const ownPatientIds = ownPatients.map((patient) => patient.id);
+
+    if (ownPatientIds.length === 0) {
+      return res.status(200).json({
+        success: true,
+        count: 0,
+        diagnoses: [],
+      });
+    }
+
+    query = query.in("patient_id", ownPatientIds);
+  }
+
   const { data: diagnoses, error } = await query;
 
   if (error) {
@@ -87,6 +118,16 @@ export const getDiagnosisById = asyncHandler(async (req, res) => {
 
   if (error || !diagnosis) {
     throw new ApiError(404, "Diagnosis record not found.");
+  }
+
+  if (
+    req.user.role === "clinician" &&
+    diagnosis.patient?.doctor?.id !== req.user.doctor_id
+  ) {
+    throw new ApiError(
+      403,
+      "You can only access diagnoses for your own patients.",
+    );
   }
 
   res.status(200).json({
@@ -146,6 +187,34 @@ export const createDiagnosis = asyncHandler(async (req, res) => {
 
 export const updateDiagnosis = asyncHandler(async (req, res) => {
   const { id } = req.params;
+
+  if (req.user.role === "clinician") {
+    const { data: existingDiagnosis, error: existingDiagnosisError } =
+      await supabase
+        .from("diagnoses")
+        .select(
+          `
+      id,
+      patient:patients (
+        id,
+        doctor_id
+      )
+    `,
+        )
+        .eq("id", id)
+        .single();
+
+    if (existingDiagnosisError || !existingDiagnosis) {
+      throw new ApiError(404, "Diagnosis record not found.");
+    }
+
+    if (existingDiagnosis.patient?.doctor_id !== req.user.doctor_id) {
+      throw new ApiError(
+        403,
+        "You can only update diagnoses for your own patients.",
+      );
+    }
+  }
 
   const { patient_id, icd_code, description, severity, notes, diagnosed_at } =
     req.body;

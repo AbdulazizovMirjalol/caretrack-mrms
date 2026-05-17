@@ -1,3 +1,4 @@
+import bcrypt from "bcryptjs";
 import { supabase } from "../config/supabase.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/apiError.js";
@@ -68,7 +69,8 @@ export const getDoctorById = asyncHandler(async (req, res) => {
 });
 
 export const createDoctor = asyncHandler(async (req, res) => {
-  const { full_name, specialty, department, phone, email } = req.body;
+  const { full_name, specialty, department, phone, email, account_password } =
+    req.body;
 
   if (!full_name || !specialty || !department || !phone || !email) {
     throw new ApiError(
@@ -97,10 +99,38 @@ export const createDoctor = asyncHandler(async (req, res) => {
     throw new ApiError(500, error.message);
   }
 
+  const password_hash = await bcrypt.hash(
+    account_password || "Password123!",
+    10,
+  );
+
+  const { data: userAccount, error: userError } = await supabase
+    .from("users")
+    .insert({
+      full_name,
+      email: email.toLowerCase(),
+      password_hash,
+      role: "clinician",
+      doctor_id: doctor.id,
+    })
+    .select("id, full_name, email, role, doctor_id")
+    .single();
+
+  if (userError) {
+    await supabase.from("doctors").delete().eq("id", doctor.id);
+
+    if (userError.code === "23505") {
+      throw new ApiError(409, "A user account with this email already exists.");
+    }
+
+    throw new ApiError(500, userError.message);
+  }
+
   res.status(201).json({
     success: true,
-    message: "Doctor created successfully.",
+    message: "Doctor and clinician login account created successfully.",
     doctor,
+    userAccount,
   });
 });
 

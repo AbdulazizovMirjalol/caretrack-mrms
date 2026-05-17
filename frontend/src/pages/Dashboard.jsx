@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { AlertTriangle, ClipboardList, Stethoscope, Users } from "lucide-react";
 import { api } from "../services/api";
+import { useAuth } from "../context/AuthContext";
 
 const statCards = [
   {
@@ -44,6 +45,7 @@ const severityClasses = {
 };
 
 const Dashboard = () => {
+  const { user } = useAuth();
   const [dashboard, setDashboard] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -84,12 +86,15 @@ const Dashboard = () => {
             </p>
 
             <h1 className="mt-2 text-2xl font-bold text-slate-950">
-              Clinical Operations Overview
+              {user?.role === "clinician"
+                ? "My Clinical Overview"
+                : "Clinical Operations Overview"}
             </h1>
 
             <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
-              Monitor doctors, registered patients and diagnosis activity across
-              CareTrack Clinic’s medical records system.
+              {user?.role === "clinician"
+                ? "Monitor your assigned patients and diagnosis records from your CareTrack clinician workspace."
+                : "Monitor doctors, registered patients and diagnosis activity across CareTrack Clinic’s medical records system."}
             </p>
           </div>
 

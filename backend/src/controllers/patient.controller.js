@@ -88,6 +88,18 @@ export const getPatients = asyncHandler(async (req, res) => {
     query = query.eq("doctor_id", doctorId);
   }
 
+  if (req.user.role === "clinician") {
+    if (!req.user.doctor_id) {
+      return res.status(200).json({
+        success: true,
+        count: 0,
+        patients: [],
+      });
+    }
+
+    query = query.eq("doctor_id", req.user.doctor_id);
+  }
+
   const { data: patients, error } = await query;
 
   if (error) {
@@ -131,6 +143,22 @@ export const getPatientProfile = asyncHandler(async (req, res) => {
 
   if (error || !patient) {
     throw new ApiError(404, "Patient profile not found.");
+  }
+
+  if (
+    req.user.role === "clinician" &&
+    req.user.doctor_id &&
+    patient.doctor_id !== req.user.doctor_id
+  ) {
+    throw new ApiError(403, "You can only access patients assigned to you.");
+  }
+
+  if (
+    req.user.role === "clinician" &&
+    req.user.doctor_id &&
+    patient.doctor_id !== req.user.doctor_id
+  ) {
+    throw new ApiError(403, "You can only access patients assigned to you.");
   }
 
   res.status(200).json({
@@ -189,6 +217,23 @@ export const createPatient = asyncHandler(async (req, res) => {
 
 export const updatePatient = asyncHandler(async (req, res) => {
   const { id } = req.params;
+
+  if (req.user.role === "clinician") {
+    const { data: existingPatient, error: existingPatientError } =
+      await supabase
+        .from("patients")
+        .select("id, doctor_id")
+        .eq("id", id)
+        .single();
+
+    if (existingPatientError || !existingPatient) {
+      throw new ApiError(404, "Patient not found.");
+    }
+
+    if (existingPatient.doctor_id !== req.user.doctor_id) {
+      throw new ApiError(403, "You can only update patients assigned to you.");
+    }
+  }
 
   const { full_name, date_of_birth, gender, phone, address, doctor_id } =
     req.body;
