@@ -28,6 +28,29 @@ const seedDatabase = async () => {
 
   const password_hash = await bcrypt.hash(password, 10);
 
+  const doctors = [
+    {
+      full_name: "Dr. Ali Karimov",
+      specialty: "Cardiology",
+      department: "Cardiology",
+      phone: "+998901112233",
+      email: "ali.karimov@caretrack.com",
+    },
+    {
+      full_name: "Dr. Dilnoza Akhmedova",
+      specialty: "Neurology",
+      department: "Neurology",
+      phone: "+998902223344",
+      email: "dilnoza.akhmedova@caretrack.com",
+    },
+    {
+      full_name: "Dr. Javlon Rustamov",
+      specialty: "Dermatology",
+      department: "Dermatology",
+      phone: "+998903334455",
+      email: "javlon.rustamov@caretrack.com",
+    },
+  ];
 
   const { data: insertedDoctors, error: doctorsError } = await supabase
     .from("doctors")
