@@ -28,30 +28,6 @@ const seedDatabase = async () => {
 
   const password_hash = await bcrypt.hash(password, 10);
 
-  const users = [
-    {
-      full_name: "System Administrator",
-      email: "admin@caretrack.com",
-      password_hash,
-      role: "admin",
-    },
-    {
-      full_name: "Dr. Clinical User",
-      email: "clinician@caretrack.com",
-      password_hash,
-      role: "clinician",
-    },
-    {
-      full_name: "Reception Desk",
-      email: "receptionist@caretrack.com",
-      password_hash,
-      role: "receptionist",
-    },
-  ];
-
-  const { error: usersError } = await supabase.from("users").insert(users);
-
-  throwIfError("Failed to insert users", usersError);
 
   const { data: insertedDoctors, error: doctorsError } = await supabase
     .from("doctors")
