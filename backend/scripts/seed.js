@@ -53,36 +53,40 @@ const seedDatabase = async () => {
 
   throwIfError("Failed to insert users", usersError);
 
-  const doctors = [
-    {
-      full_name: "Dr. Ali Karimov",
-      specialty: "Cardiologist",
-      department: "Cardiology",
-      phone: "+998901112233",
-      email: "ali.karimov@caretrack.com",
-    },
-    {
-      full_name: "Dr. Dilnoza Rahimova",
-      specialty: "Neurologist",
-      department: "Neurology",
-      phone: "+998902223344",
-      email: "dilnoza.rahimova@caretrack.com",
-    },
-    {
-      full_name: "Dr. Jasur Tursunov",
-      specialty: "Dermatologist",
-      department: "Dermatology",
-      phone: "+998903334455",
-      email: "jasur.tursunov@caretrack.com",
-    },
-  ];
-
   const { data: insertedDoctors, error: doctorsError } = await supabase
     .from("doctors")
     .insert(doctors)
     .select();
 
   throwIfError("Failed to insert doctors", doctorsError);
+
+  const users = [
+    {
+      full_name: "System Administrator",
+      email: "admin@caretrack.com",
+      password_hash,
+      role: "admin",
+      doctor_id: null,
+    },
+    {
+      full_name: "Dr. Clinical User",
+      email: "clinician@caretrack.com",
+      password_hash,
+      role: "clinician",
+      doctor_id: insertedDoctors[0].id,
+    },
+    {
+      full_name: "Reception Desk",
+      email: "receptionist@caretrack.com",
+      password_hash,
+      role: "receptionist",
+      doctor_id: null,
+    },
+  ];
+
+  const { error: usersError } = await supabase.from("users").insert(users);
+
+  throwIfError("Failed to insert users", usersError);
 
   const patients = [
     {

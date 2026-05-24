@@ -222,6 +222,10 @@ export const updateDiagnosis = asyncHandler(async (req, res) => {
   const updateData = {};
 
   if (patient_id !== undefined) {
+    if (req.user.role === "clinician") {
+      throw new ApiError(403, "Clinicians cannot reassign diagnosis records.");
+    }
+
     await ensurePatientExists(patient_id);
     updateData.patient_id = patient_id;
   }

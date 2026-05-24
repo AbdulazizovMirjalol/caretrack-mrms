@@ -9,7 +9,6 @@ create table if not exists users (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
-
 create table if not exists doctors (
   id uuid primary key default gen_random_uuid(),
   full_name text not null,
@@ -20,6 +19,9 @@ create table if not exists doctors (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table users
+add column if not exists doctor_id uuid references doctors(id) on delete set null;
 
 create table if not exists patients (
   id uuid primary key default gen_random_uuid(),
@@ -47,6 +49,7 @@ create table if not exists diagnoses (
 
 create index if not exists idx_users_email on users(email);
 create index if not exists idx_users_role on users(role);
+create index if not exists idx_users_doctor_id on users(doctor_id);
 
 create index if not exists idx_doctors_full_name on doctors(full_name);
 create index if not exists idx_doctors_specialty on doctors(specialty);

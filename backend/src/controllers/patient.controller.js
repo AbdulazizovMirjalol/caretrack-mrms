@@ -66,6 +66,14 @@ const ensureDoctorExists = async (doctorId) => {
   }
 };
 
+const ensureClinicianOwnsPatient = (req, patient) => {
+  if (req.user.role !== "clinician") return;
+
+  if (!req.user.doctor_id || patient.doctor_id !== req.user.doctor_id) {
+    throw new ApiError(403, "You can only access patients assigned to you.");
+  }
+};
+
 export const getPatients = asyncHandler(async (req, res) => {
   const { search, gender, doctorId } = req.query;
 
@@ -126,6 +134,8 @@ export const getPatientById = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Patient not found.");
   }
 
+  ensureClinicianOwnsPatient(req, patient);
+
   res.status(200).json({
     success: true,
     patient,
@@ -145,21 +155,7 @@ export const getPatientProfile = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Patient profile not found.");
   }
 
-  if (
-    req.user.role === "clinician" &&
-    req.user.doctor_id &&
-    patient.doctor_id !== req.user.doctor_id
-  ) {
-    throw new ApiError(403, "You can only access patients assigned to you.");
-  }
-
-  if (
-    req.user.role === "clinician" &&
-    req.user.doctor_id &&
-    patient.doctor_id !== req.user.doctor_id
-  ) {
-    throw new ApiError(403, "You can only access patients assigned to you.");
-  }
+  ensureClinicianOwnsPatient(req, patient);
 
   res.status(200).json({
     success: true,
@@ -254,6 +250,10 @@ export const updatePatient = asyncHandler(async (req, res) => {
   }
 
   if (doctor_id !== undefined) {
+    if (req.user.role === "clinician") {
+      throw new ApiError(403, "Clinicians cannot change the assigned doctor.");
+    }
+
     await ensureDoctorExists(doctor_id);
     updateData.doctor_id = doctor_id;
   }
