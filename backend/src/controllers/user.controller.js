@@ -2,6 +2,7 @@ import bcrypt from "bcryptjs";
 import { supabase } from "../config/supabase.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/apiError.js";
+import { normalizeEmail, trimString } from "../utils/sanitize.js";
 
 const userFields = `
   id,
@@ -49,7 +50,11 @@ export const getUsers = asyncHandler(async (req, res) => {
 });
 
 export const createUser = asyncHandler(async (req, res) => {
-  const { full_name, email, role, password, doctor_id } = req.body;
+  const full_name = trimString(req.body.full_name);
+  const email = normalizeEmail(req.body.email);
+  const role = trimString(req.body.role);
+  const password = trimString(req.body.password);
+  const doctor_id = trimString(req.body.doctor_id);
 
   if (!full_name || !email || !role || !password) {
     throw new ApiError(
@@ -76,7 +81,7 @@ export const createUser = asyncHandler(async (req, res) => {
     .from("users")
     .insert({
       full_name,
-      email: email.toLowerCase(),
+      email,
       role,
       doctor_id: role === "clinician" ? doctor_id : null,
       password_hash,
@@ -101,7 +106,7 @@ export const createUser = asyncHandler(async (req, res) => {
 
 export const resetUserPassword = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const { new_password } = req.body;
+  const new_password = trimString(req.body.new_password);
 
   if (!new_password) {
     throw new ApiError(400, "New password is required.");

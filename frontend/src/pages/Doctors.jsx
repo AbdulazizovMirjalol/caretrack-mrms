@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Edit, Plus, Search, Trash2, X } from "lucide-react";
-import { api } from "../services/api";
+import { api, getApiErrorMessage } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 
 const initialForm = {
@@ -35,6 +35,7 @@ const Doctors = () => {
   const [formData, setFormData] = useState(initialForm);
 
   const [error, setError] = useState("");
+  const [loadError, setLoadError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   const fetchDoctors = useCallback(async () => {
@@ -57,6 +58,15 @@ const Doctors = () => {
     try {
       const { data } = await api.get(url);
       setDoctors(data.doctors || []);
+      setLoadError("");
+    } catch (err) {
+      setDoctors([]);
+      setLoadError(
+        getApiErrorMessage(
+          err,
+          "Unable to load doctors. Please refresh the page or try again shortly.",
+        ),
+      );
     } finally {
       setLoading(false);
     }
@@ -120,7 +130,12 @@ const Doctors = () => {
       await fetchDoctors();
       closeForm();
     } catch (err) {
-      setError(err.response?.data?.message || "Doctor action failed.");
+      setError(
+        getApiErrorMessage(
+          err,
+          "Doctor details could not be saved. Please check the form and try again.",
+        ),
+      );
     } finally {
       setSubmitting(false);
     }
@@ -137,7 +152,12 @@ const Doctors = () => {
       await api.delete(`/doctors/${doctor.id}`);
       await fetchDoctors();
     } catch (err) {
-      alert(err.response?.data?.message || "Doctor delete failed.");
+      alert(
+        getApiErrorMessage(
+          err,
+          "Doctor could not be deleted. Please try again.",
+        ),
+      );
     }
   };
 
@@ -199,6 +219,12 @@ const Doctors = () => {
       </section>
 
       <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-panel">
+        {loadError && (
+          <div className="border-b border-red-200 bg-red-50 px-5 py-3 text-sm font-bold text-red-700">
+            {loadError}
+          </div>
+        )}
+
         <div className="overflow-x-auto">
           <table className="w-full min-w-[900px] text-left text-sm">
             <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">

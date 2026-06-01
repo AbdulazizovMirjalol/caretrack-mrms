@@ -1,6 +1,7 @@
 import { supabase } from "../config/supabase.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/apiError.js";
+import { trimString } from "../utils/sanitize.js";
 
 const patientFields = `
   id,
@@ -164,8 +165,12 @@ export const getPatientProfile = asyncHandler(async (req, res) => {
 });
 
 export const createPatient = asyncHandler(async (req, res) => {
-  const { full_name, date_of_birth, gender, phone, address, doctor_id } =
-    req.body;
+  const full_name = trimString(req.body.full_name);
+  const date_of_birth = trimString(req.body.date_of_birth);
+  const gender = trimString(req.body.gender);
+  const phone = trimString(req.body.phone);
+  const address = trimString(req.body.address);
+  const doctor_id = trimString(req.body.doctor_id);
 
   if (
     !full_name ||
@@ -231,8 +236,12 @@ export const updatePatient = asyncHandler(async (req, res) => {
     }
   }
 
-  const { full_name, date_of_birth, gender, phone, address, doctor_id } =
-    req.body;
+  const full_name = trimString(req.body.full_name);
+  const date_of_birth = trimString(req.body.date_of_birth);
+  const gender = trimString(req.body.gender);
+  const phone = trimString(req.body.phone);
+  const address = trimString(req.body.address);
+  const doctor_id = trimString(req.body.doctor_id);
 
   const updateData = {};
 

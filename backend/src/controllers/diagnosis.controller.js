@@ -1,6 +1,7 @@
 import { supabase } from "../config/supabase.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/apiError.js";
+import { trimString } from "../utils/sanitize.js";
 
 const diagnosisFields = `
   id,
@@ -137,8 +138,12 @@ export const getDiagnosisById = asyncHandler(async (req, res) => {
 });
 
 export const createDiagnosis = asyncHandler(async (req, res) => {
-  const { patient_id, icd_code, description, severity, notes, diagnosed_at } =
-    req.body;
+  const patient_id = trimString(req.body.patient_id);
+  const icd_code = trimString(req.body.icd_code);
+  const description = trimString(req.body.description);
+  const severity = trimString(req.body.severity);
+  const notes = trimString(req.body.notes);
+  const diagnosed_at = trimString(req.body.diagnosed_at);
 
   if (!patient_id || !icd_code || !description || !severity) {
     throw new ApiError(
@@ -216,8 +221,12 @@ export const updateDiagnosis = asyncHandler(async (req, res) => {
     }
   }
 
-  const { patient_id, icd_code, description, severity, notes, diagnosed_at } =
-    req.body;
+  const patient_id = trimString(req.body.patient_id);
+  const icd_code = trimString(req.body.icd_code);
+  const description = trimString(req.body.description);
+  const severity = trimString(req.body.severity);
+  const notes = trimString(req.body.notes);
+  const diagnosed_at = trimString(req.body.diagnosed_at);
 
   const updateData = {};
 

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Edit, Plus, Search, Trash2, X } from "lucide-react";
-import { api } from "../services/api";
+import { api, getApiErrorMessage } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 
 const initialForm = {
@@ -39,11 +39,22 @@ const Diagnoses = () => {
   const [formData, setFormData] = useState(initialForm);
 
   const [error, setError] = useState("");
+  const [loadError, setLoadError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   const fetchPatients = async () => {
-    const { data } = await api.get("/patients");
-    setPatients(data.patients || []);
+    try {
+      const { data } = await api.get("/patients");
+      setPatients(data.patients || []);
+    } catch (err) {
+      setPatients([]);
+      setLoadError(
+        getApiErrorMessage(
+          err,
+          "Unable to load patients for diagnosis records. Please try again shortly.",
+        ),
+      );
+    }
   };
 
   const fetchDiagnoses = useCallback(async () => {
@@ -62,6 +73,15 @@ const Diagnoses = () => {
     try {
       const { data } = await api.get(url);
       setDiagnoses(data.diagnoses || []);
+      setLoadError("");
+    } catch (err) {
+      setDiagnoses([]);
+      setLoadError(
+        getApiErrorMessage(
+          err,
+          "Unable to load diagnoses. Please refresh the page or try again shortly.",
+        ),
+      );
     } finally {
       setLoading(false);
     }
@@ -135,7 +155,12 @@ const Diagnoses = () => {
       await fetchDiagnoses();
       closeForm();
     } catch (err) {
-      setError(err.response?.data?.message || "Diagnosis action failed.");
+      setError(
+        getApiErrorMessage(
+          err,
+          "Diagnosis details could not be saved. Please check the form and try again.",
+        ),
+      );
     } finally {
       setSubmitting(false);
     }
@@ -152,7 +177,12 @@ const Diagnoses = () => {
       await api.delete(`/diagnoses/${diagnosis.id}`);
       await fetchDiagnoses();
     } catch (err) {
-      alert(err.response?.data?.message || "Diagnosis delete failed.");
+      alert(
+        getApiErrorMessage(
+          err,
+          "Diagnosis record could not be deleted. Please try again.",
+        ),
+      );
     }
   };
 
@@ -230,6 +260,12 @@ const Diagnoses = () => {
       </section>
 
       <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-panel">
+        {loadError && (
+          <div className="border-b border-red-200 bg-red-50 px-5 py-3 text-sm font-bold text-red-700">
+            {loadError}
+          </div>
+        )}
+
         <div className="overflow-x-auto">
           <table className="w-full min-w-[1100px] text-left text-sm">
             <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">

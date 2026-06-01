@@ -4,6 +4,7 @@ import { supabase } from "../config/supabase.js";
 import { env } from "../config/env.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/apiError.js";
+import { normalizeEmail, trimString } from "../utils/sanitize.js";
 
 const createToken = (user) => {
   return jwt.sign(
@@ -27,7 +28,8 @@ const publicUserFields = (user) => ({
 });
 
 export const login = asyncHandler(async (req, res) => {
-  const { email, password } = req.body;
+  const email = normalizeEmail(req.body.email);
+  const password = trimString(req.body.password);
 
   if (!email || !password) {
     throw new ApiError(400, "Email and password are required.");
@@ -36,7 +38,7 @@ export const login = asyncHandler(async (req, res) => {
   const { data: user, error } = await supabase
     .from("users")
     .select("id, full_name, email, password_hash, role, doctor_id")
-    .eq("email", email.toLowerCase())
+    .eq("email", email)
     .single();
 
   if (error || !user) {
@@ -67,12 +69,13 @@ export const getMe = asyncHandler(async (req, res) => {
 });
 
 export const updateProfile = asyncHandler(async (req, res) => {
-  const { full_name, email } = req.body;
+  const full_name = trimString(req.body.full_name);
+  const email = normalizeEmail(req.body.email);
 
   const updateData = {};
 
   if (full_name !== undefined) updateData.full_name = full_name;
-  if (email !== undefined) updateData.email = email.toLowerCase();
+  if (email !== undefined) updateData.email = email;
 
   if (Object.keys(updateData).length === 0) {
     throw new ApiError(400, "At least one field is required to update.");

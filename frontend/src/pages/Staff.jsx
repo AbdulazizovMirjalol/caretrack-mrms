@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { KeyRound, Plus, Search, Trash2, X } from "lucide-react";
-import { api } from "../services/api";
+import { api, getApiErrorMessage } from "../services/api";
+import { useAuth } from "../context/AuthContext";
 
 const initialForm = {
   full_name: "",
@@ -17,6 +18,7 @@ const roleLabels = {
 };
 
 const Staff = () => {
+  const { user: currentUser } = useAuth();
   const [users, setUsers] = useState([]);
   const [doctors, setDoctors] = useState([]);
 
@@ -31,11 +33,22 @@ const Staff = () => {
   const [newPassword, setNewPassword] = useState("Password123!");
 
   const [error, setError] = useState("");
+  const [loadError, setLoadError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   const fetchDoctors = async () => {
-    const { data } = await api.get("/doctors");
-    setDoctors(data.doctors || []);
+    try {
+      const { data } = await api.get("/doctors");
+      setDoctors(data.doctors || []);
+    } catch (err) {
+      setDoctors([]);
+      setLoadError(
+        getApiErrorMessage(
+          err,
+          "Unable to load doctors for staff links. Please try again shortly.",
+        ),
+      );
+    }
   };
 
   const fetchUsers = useCallback(async () => {
@@ -50,6 +63,15 @@ const Staff = () => {
     try {
       const { data } = await api.get(url);
       setUsers(data.users || []);
+      setLoadError("");
+    } catch (err) {
+      setUsers([]);
+      setLoadError(
+        getApiErrorMessage(
+          err,
+          "Unable to load staff accounts. Please refresh the page or try again shortly.",
+        ),
+      );
     } finally {
       setLoading(false);
     }
@@ -96,13 +118,20 @@ const Staff = () => {
       await fetchUsers();
       closeCreate();
     } catch (err) {
-      setError(err.response?.data?.message || "Staff account creation failed.");
+      setError(
+        getApiErrorMessage(
+          err,
+          "Staff account could not be created. Please check the form and try again.",
+        ),
+      );
     } finally {
       setSubmitting(false);
     }
   };
 
   const deleteUser = async (user) => {
+    if (user.id === currentUser?.id) return;
+
     const confirmed = window.confirm(`Delete account for ${user.full_name}?`);
     if (!confirmed) return;
 
@@ -110,7 +139,12 @@ const Staff = () => {
       await api.delete(`/users/${user.id}`);
       await fetchUsers();
     } catch (err) {
-      alert(err.response?.data?.message || "Staff delete failed.");
+      alert(
+        getApiErrorMessage(
+          err,
+          "Staff account could not be deleted. Please try again.",
+        ),
+      );
     }
   };
 
@@ -127,7 +161,12 @@ const Staff = () => {
       setNewPassword("Password123!");
       alert("Password reset successfully.");
     } catch (err) {
-      alert(err.response?.data?.message || "Password reset failed.");
+      alert(
+        getApiErrorMessage(
+          err,
+          "Password could not be reset. Please try again.",
+        ),
+      );
     }
   };
 
@@ -183,6 +222,12 @@ const Staff = () => {
       </section>
 
       <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-panel">
+        {loadError && (
+          <div className="border-b border-red-200 bg-red-50 px-5 py-3 text-sm font-bold text-red-700">
+            {loadError}
+          </div>
+        )}
+
         <div className="overflow-x-auto">
           <table className="w-full min-w-[900px] text-left text-sm">
             <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
@@ -204,53 +249,62 @@ const Staff = () => {
               )}
 
               {!loading &&
-                users.map((user) => (
-                  <tr key={user.id} className="hover:bg-slate-50">
-                    <td className="px-5 py-4">
-                      <p className="font-bold text-slate-950">
-                        {user.full_name}
-                      </p>
-                      <p className="text-xs font-medium text-slate-500">
-                        {user.email}
-                      </p>
-                    </td>
+                users.map((staffUser) => {
+                  const isCurrentUser = staffUser.id === currentUser?.id;
 
-                    <td className="px-5 py-4">
-                      <span className="rounded-full border border-teal-100 bg-teal-50 px-2.5 py-1 text-xs font-bold text-teal-700">
-                        {roleLabels[user.role] || user.role}
-                      </span>
-                    </td>
+                  return (
+                    <tr key={staffUser.id} className="hover:bg-slate-50">
+                      <td className="px-5 py-4">
+                        <p className="font-bold text-slate-950">
+                          {staffUser.full_name}
+                        </p>
+                        <p className="text-xs font-medium text-slate-500">
+                          {staffUser.email}
+                        </p>
+                      </td>
 
-                    <td className="px-5 py-4">
-                      <p className="font-semibold text-slate-700">
-                        {user.doctor?.full_name || "Not linked"}
-                      </p>
-                      <p className="text-xs font-medium text-slate-500">
-                        {user.doctor?.department || ""}
-                      </p>
-                    </td>
+                      <td className="px-5 py-4">
+                        <span className="rounded-full border border-teal-100 bg-teal-50 px-2.5 py-1 text-xs font-bold text-teal-700">
+                          {roleLabels[staffUser.role] || staffUser.role}
+                        </span>
+                      </td>
 
-                    <td className="px-5 py-4">
-                      <div className="flex justify-end gap-2">
-                        <button
-                          onClick={() => setResetUser(user)}
-                          className="rounded-lg border border-slate-300 bg-white p-2 text-slate-600 hover:border-teal-200 hover:bg-teal-50 hover:text-teal-700"
-                          title="Reset password"
-                        >
-                          <KeyRound size={16} />
-                        </button>
+                      <td className="px-5 py-4">
+                        <p className="font-semibold text-slate-700">
+                          {staffUser.doctor?.full_name || "Not linked"}
+                        </p>
+                        <p className="text-xs font-medium text-slate-500">
+                          {staffUser.doctor?.department || ""}
+                        </p>
+                      </td>
 
-                        <button
-                          onClick={() => deleteUser(user)}
-                          className="rounded-lg border border-slate-300 bg-white p-2 text-slate-600 hover:border-red-200 hover:bg-red-50 hover:text-red-700"
-                          title="Delete account"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                      <td className="px-5 py-4">
+                        <div className="flex justify-end gap-2">
+                          <button
+                            onClick={() => setResetUser(staffUser)}
+                            className="rounded-lg border border-slate-300 bg-white p-2 text-slate-600 hover:border-teal-200 hover:bg-teal-50 hover:text-teal-700"
+                            title="Reset password"
+                          >
+                            <KeyRound size={16} />
+                          </button>
+
+                          <button
+                            onClick={() => deleteUser(staffUser)}
+                            disabled={isCurrentUser}
+                            className="rounded-lg border border-slate-300 bg-white p-2 text-slate-600 hover:border-red-200 hover:bg-red-50 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-slate-300 disabled:hover:bg-white disabled:hover:text-slate-600"
+                            title={
+                              isCurrentUser
+                                ? "You cannot delete your own account"
+                                : "Delete account"
+                            }
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
 
               {!loading && users.length === 0 && (
                 <tr>

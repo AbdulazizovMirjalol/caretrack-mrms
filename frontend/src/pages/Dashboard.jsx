@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { AlertTriangle, ClipboardList, Stethoscope, Users } from "lucide-react";
-import { api } from "../services/api";
+import { api, getApiErrorMessage } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 
 const statCards = [
@@ -48,11 +48,20 @@ const Dashboard = () => {
   const { user } = useAuth();
   const [dashboard, setDashboard] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   const fetchDashboard = async () => {
     try {
       const { data } = await api.get("/dashboard/stats");
       setDashboard(data);
+      setError("");
+    } catch (err) {
+      setError(
+        getApiErrorMessage(
+          err,
+          "Unable to load dashboard data. Please refresh the page or try again shortly.",
+        ),
+      );
     } finally {
       setLoading(false);
     }
@@ -68,6 +77,14 @@ const Dashboard = () => {
         <p className="text-sm font-semibold text-slate-500">
           Loading dashboard...
         </p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="rounded-xl border border-red-200 bg-red-50 p-6 shadow-panel">
+        <p className="text-sm font-bold text-red-700">{error}</p>
       </div>
     );
   }

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Edit, Eye, Plus, Search, Trash2, X } from "lucide-react";
 import { Link } from "react-router-dom";
-import { api } from "../services/api";
+import { api, getApiErrorMessage } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 
 const initialForm = {
@@ -33,11 +33,22 @@ const Patients = () => {
   const [formData, setFormData] = useState(initialForm);
 
   const [error, setError] = useState("");
+  const [loadError, setLoadError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   const fetchDoctors = async () => {
-    const { data } = await api.get("/doctors");
-    setDoctors(data.doctors || []);
+    try {
+      const { data } = await api.get("/doctors");
+      setDoctors(data.doctors || []);
+    } catch (err) {
+      setDoctors([]);
+      setLoadError(
+        getApiErrorMessage(
+          err,
+          "Unable to load doctors for patient assignment. Please try again shortly.",
+        ),
+      );
+    }
   };
 
   const fetchPatients = useCallback(async () => {
@@ -56,6 +67,15 @@ const Patients = () => {
     try {
       const { data } = await api.get(url);
       setPatients(data.patients || []);
+      setLoadError("");
+    } catch (err) {
+      setPatients([]);
+      setLoadError(
+        getApiErrorMessage(
+          err,
+          "Unable to load patients. Please refresh the page or try again shortly.",
+        ),
+      );
     } finally {
       setLoading(false);
     }
@@ -126,7 +146,12 @@ const Patients = () => {
       await fetchPatients();
       closeForm();
     } catch (err) {
-      setError(err.response?.data?.message || "Patient action failed.");
+      setError(
+        getApiErrorMessage(
+          err,
+          "Patient details could not be saved. Please check the form and try again.",
+        ),
+      );
     } finally {
       setSubmitting(false);
     }
@@ -143,7 +168,12 @@ const Patients = () => {
       await api.delete(`/patients/${patient.id}`);
       await fetchPatients();
     } catch (err) {
-      alert(err.response?.data?.message || "Patient delete failed.");
+      alert(
+        getApiErrorMessage(
+          err,
+          "Patient could not be deleted. Please try again.",
+        ),
+      );
     }
   };
 
@@ -219,6 +249,12 @@ const Patients = () => {
       </section>
 
       <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-panel">
+        {loadError && (
+          <div className="border-b border-red-200 bg-red-50 px-5 py-3 text-sm font-bold text-red-700">
+            {loadError}
+          </div>
+        )}
+
         <div className="overflow-x-auto">
           <table className="w-full min-w-[1050px] text-left text-sm">
             <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">

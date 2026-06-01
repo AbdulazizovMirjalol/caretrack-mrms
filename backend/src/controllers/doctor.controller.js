@@ -2,6 +2,7 @@ import bcrypt from "bcryptjs";
 import { supabase } from "../config/supabase.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/apiError.js";
+import { normalizeEmail, trimString } from "../utils/sanitize.js";
 
 const doctorFields = `
   id,
@@ -69,8 +70,12 @@ export const getDoctorById = asyncHandler(async (req, res) => {
 });
 
 export const createDoctor = asyncHandler(async (req, res) => {
-  const { full_name, specialty, department, phone, email, account_password } =
-    req.body;
+  const full_name = trimString(req.body.full_name);
+  const specialty = trimString(req.body.specialty);
+  const department = trimString(req.body.department);
+  const phone = trimString(req.body.phone);
+  const email = normalizeEmail(req.body.email);
+  const account_password = trimString(req.body.account_password);
 
   if (!full_name || !specialty || !department || !phone || !email) {
     throw new ApiError(
@@ -86,7 +91,7 @@ export const createDoctor = asyncHandler(async (req, res) => {
       specialty,
       department,
       phone,
-      email: email.toLowerCase(),
+      email,
     })
     .select(doctorFields)
     .single();
@@ -108,7 +113,7 @@ export const createDoctor = asyncHandler(async (req, res) => {
     .from("users")
     .insert({
       full_name,
-      email: email.toLowerCase(),
+      email,
       password_hash,
       role: "clinician",
       doctor_id: doctor.id,
@@ -136,7 +141,11 @@ export const createDoctor = asyncHandler(async (req, res) => {
 
 export const updateDoctor = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const { full_name, specialty, department, phone, email } = req.body;
+  const full_name = trimString(req.body.full_name);
+  const specialty = trimString(req.body.specialty);
+  const department = trimString(req.body.department);
+  const phone = trimString(req.body.phone);
+  const email = normalizeEmail(req.body.email);
 
   const updateData = {};
 
@@ -144,7 +153,7 @@ export const updateDoctor = asyncHandler(async (req, res) => {
   if (specialty !== undefined) updateData.specialty = specialty;
   if (department !== undefined) updateData.department = department;
   if (phone !== undefined) updateData.phone = phone;
-  if (email !== undefined) updateData.email = email.toLowerCase();
+  if (email !== undefined) updateData.email = email;
 
   if (Object.keys(updateData).length === 0) {
     throw new ApiError(400, "At least one field is required to update.");
@@ -192,6 +201,17 @@ export const deleteDoctor = asyncHandler(async (req, res) => {
     );
   }
 
+  const { data: linkedUsers, error: linkedUsersError } = await supabase
+    .from("users")
+    .delete()
+    .eq("doctor_id", id)
+    .eq("role", "clinician")
+    .select("id");
+
+  if (linkedUsersError) {
+    throw new ApiError(500, linkedUsersError.message);
+  }
+
   const { data: doctor, error } = await supabase
     .from("doctors")
     .delete()
@@ -205,7 +225,8 @@ export const deleteDoctor = asyncHandler(async (req, res) => {
 
   res.status(200).json({
     success: true,
-    message: "Doctor deleted successfully.",
+    message: "Doctor and linked clinician account deleted successfully.",
     doctor,
+    deletedLinkedClinicianAccounts: (linkedUsers || []).length,
   });
 });
